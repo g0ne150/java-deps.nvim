@@ -5,6 +5,7 @@
 -- 该模块负责 snacks.nvim picker 的所有逻辑，包括自定义的 finder 和 confirm 行为。
 
 local tree = require("java-deps.tree")
+local jdtls = require("java-deps.jdtls")
 local NodeKind = require("java-deps.node_kind").NodeKind
 local ContainerEntryKind = require("java-deps.node_kind").ContainerEntryKind
 
@@ -34,6 +35,18 @@ local function is_toggleable(node)
     or node.kind == NodeKind.Package
 end
 
+-- Helper function to toggle a node and refresh the picker.
+-- 辅助函数，用于切换节点并刷新选择器。
+local function toggle_node(p, node_to_toggle)
+  p.list:set_target()
+  tree.toggle(tree.get_id(node_to_toggle), function()
+    if not p.closed then p:find() end
+  end)
+end
+
+local function open_node(bufnr, uri)
+    vim.cmd("edit " .. uri) -- FIXME Not working for 'jdt://' prefix uri
+end
 -- Show the dependency tree picker.
 -- 显示依赖树选择器。
 function M.show(projects, bufnr)
@@ -55,13 +68,12 @@ function M.show(projects, bufnr)
         if not item then return end
         local node = item.value
         if is_toggleable(node) then
-          p.list:set_target()
-          tree.toggle(tree.get_id(node), function()
-            if not p.closed then p:find() end
-          end)
+          toggle_node(p, node)
         else
           p:close()
-          print(vim.inspect(node))
+          if node.uri then
+            open_node(bufnr, node.uri)
+          end
         end
       end,
       -- Expands a node only if it's collapsed.
@@ -70,10 +82,12 @@ function M.show(projects, bufnr)
         if not item then return end
         local node = item.value
         if is_toggleable(node) and not tree.is_open(tree.get_id(node)) then
-          p.list:set_target()
-          tree.toggle(tree.get_id(node), function()
-            if not p.closed then p:find() end
-          end)
+          toggle_node(p, node)
+        elseif not is_toggleable(node) then
+          p:close()
+          if node.uri then
+            open_node(bufnr, node.uri)
+          end
         end
       end,
       -- Collapses a node. If already collapsed, collapses the parent.
@@ -82,15 +96,9 @@ function M.show(projects, bufnr)
         if not item then return end
         local node = item.value
         if is_toggleable(node) and tree.is_open(tree.get_id(node)) then
-          p.list:set_target()
-          tree.toggle(tree.get_id(node), function()
-            if not p.closed then p:find() end
-          end)
+          toggle_node(p, node)
         elseif node.parent then
-          p.list:set_target()
-          tree.toggle(tree.get_id(node.parent), function()
-            if not p.closed then p:find() end
-          end)
+          toggle_node(p, node.parent)
         end
       end,
     },

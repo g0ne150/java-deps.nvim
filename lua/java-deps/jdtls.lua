@@ -63,4 +63,21 @@ function M.get_children(bufnr, project_uri, node, callback)
   get_node_children(bufnr, params, callback)
 end
 
+-- Resolve a file path using jdtls.
+-- 使用 jdtls 解析文件路径。
+function M.resolve_path(bufnr, uri, callback)
+  local params = {
+    command = "java.resolvePath",
+    arguments = { uri },
+  }
+  vim.lsp.buf_request(bufnr, "workspace/executeCommand", params, function(err, result)
+    if err then
+      vim.notify("Error resolving path: " .. vim.inspect(err), vim.log.levels.ERROR)
+      callback(nil)
+    else
+      callback(result)
+    end
+  end)
+end
+
 return M
