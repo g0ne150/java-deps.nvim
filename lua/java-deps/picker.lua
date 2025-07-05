@@ -36,7 +36,7 @@ function M.show(projects, bufnr)
       toggle = function(p, item)
         if not item then return end
         local node = item.value
-        if node.kind == NodeKind.Container or node.kind == NodeKind.Project then
+        if node.kind == NodeKind.Container or node.kind == NodeKind.Project or node.kind == NodeKind.PackageRoot then
           p.list:set_target()
           tree.toggle(tree.get_id(node), function()
             if not p.closed then p:find() end
@@ -50,7 +50,7 @@ function M.show(projects, bufnr)
       expand = function(p, item)
         if not item then return end
         local node = item.value
-        if (node.kind == NodeKind.Container or node.kind == NodeKind.Project) and not tree.is_open(tree.get_id(node)) then
+        if (node.kind == NodeKind.Container or node.kind == NodeKind.Project or node.kind == NodeKind.PackageRoot) and not tree.is_open(tree.get_id(node)) then
           p.list:set_target()
           tree.toggle(tree.get_id(node), function()
             if not p.closed then p:find() end
@@ -61,7 +61,7 @@ function M.show(projects, bufnr)
       collapse = function(p, item)
         if not item then return end
         local node = item.value
-        if (node.kind == NodeKind.Container or node.kind == NodeKind.Project) and tree.is_open(tree.get_id(node)) then
+        if (node.kind == NodeKind.Container or node.kind == NodeKind.Project or node.kind == NodeKind.PackageRoot) and tree.is_open(tree.get_id(node)) then
           p.list:set_target()
           tree.toggle(tree.get_id(node), function()
             if not p.closed then p:find() end

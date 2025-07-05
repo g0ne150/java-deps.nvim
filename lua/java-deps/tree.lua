@@ -41,11 +41,21 @@ function M.toggle(node_id, callback)
       if children then
         state.children[node_id] = {}
         for _, child in ipairs(children) do
-          local child_id = get_id(child)
-          child.project_uri = node.project_uri -- Propagate project_uri to children
-          child.parent = node
-          state.nodes[child_id] = child
-          table.insert(state.children[node_id], child_id)
+          if node.kind == NodeKind.Project then
+            if child.kind == NodeKind.PackageRoot or child.kind == NodeKind.Container then
+              local child_id = get_id(child)
+              child.project_uri = node.project_uri -- Propagate project_uri to children
+              child.parent = node
+              state.nodes[child_id] = child
+              table.insert(state.children[node_id], child_id)
+            end
+          else
+            local child_id = get_id(child)
+            child.project_uri = node.project_uri -- Propagate project_uri to children
+            child.parent = node
+            state.nodes[child_id] = child
+            table.insert(state.children[node_id], child_id)
+          end
         end
       end
       callback()
@@ -68,12 +78,12 @@ function M.get_visible_nodes()
     for _, child_id in ipairs(state.children[parent_id]) do
       local child_node = state.nodes[child_id]
       local icon = "  "
-      if child_node.kind == NodeKind.Container then
+      if child_node.kind == NodeKind.Container or child_node.kind == NodeKind.PackageRoot then
         icon = state.open[child_id] and "" or ""
       end
       child_node.display = string.rep("  ", depth) .. icon .. " " .. (child_node.displayName or child_node.name)
       table.insert(items, child_node)
-      if child_node.kind == NodeKind.Container then
+      if child_node.kind == NodeKind.Container or child_node.kind == NodeKind.PackageRoot then
         add_children(child_id, depth + 1)
       end
     end

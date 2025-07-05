@@ -26,3 +26,11 @@
 1. vscode-java-dependency 通过 vscode-java-dependency/jdtls.ext/pom.xml 扩展了 jdtls，现在我通过 mason 添加了 vscode-java-dependency 模块，假设 jdtls.ext 的 jar 包有已经正确进入 jdtls runtime。
 1. 使用英语编写 README.md，使用中文编写 README_zh.md
 1. 鼓励使用 context7 mcp server，避免瞎猜 API 接口。
+
+## TODO
+
+> 不要上来就写代码，相关实现和 vscode-java-dependency 保持一致，建议先查看它代码明确需求。
+
+- [ ] project node 下只保留 packageRoot 和 container 类型的 node。
+- [ ] 实现 ProjectRoot node 的展开功能。
+- [ ] 实现 Container node 的展开功能。

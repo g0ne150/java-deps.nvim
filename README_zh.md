@@ -15,7 +15,7 @@
 
 ```lua
 {
-  "zapan/java-deps.nvim",
+  "g0ne150/java-deps.nvim",
   dependencies = { "folke/snacks.nvim" },
   config = function()
     -- 无需设置，插件在命令调用时加载
