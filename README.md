@@ -36,3 +36,7 @@ A Neovim plugin to view Java project dependencies, inspired by [vscode-java-depe
 
 - [vscode-java-dependency](https://github.com/microsoft/vscode-java-dependency): For the original idea and the `jdtls` extension.
 - [snacks.nvim](https://github.com/folke/snacks.nvim): For the awesome picker UI framework.
+
+## License
+
+[MIT](./LICENSE)

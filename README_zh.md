@@ -36,3 +36,7 @@
 
 - [vscode-java-dependency](https://github.com/microsoft/vscode-java-dependency): 提供了最初的想法和 `jdtls` 扩展。
 - [snacks.nvim](https://github.com/folke/snacks.nvim): 提供了强大的选择器 UI 框架。
+
+## 许可证
+
+[MIT](./LICENSE)
