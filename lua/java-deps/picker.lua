@@ -43,7 +43,7 @@ function M.show(projects, bufnr)
   picker({
     title = "Java Dependencies",
     finder = finder,
-    layout = "sidebar",
+    layout = { preset = "sidebar", preview = false },
     focus = "list",
     format = function(entry)
       return { { entry.display } }
