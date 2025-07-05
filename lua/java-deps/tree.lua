@@ -1,16 +1,25 @@
 -- lua/java-deps/tree.lua
 
+-- This module manages the state of the dependency tree, including node expansion and data storage.
+-- 该模块管理依赖树的状态，包括节点展开和数据存储。
+
 local jdtls = require("java-deps.jdtls")
 local NodeKind = require("java-deps.node_kind").NodeKind
 
 local M = {}
 
+-- The state of the dependency tree.
+-- 依赖树的状态。
 local state = {}
 
+-- Get a unique ID for a node.
+-- 获取节点的唯一 ID。
 local function get_id(node)
   return node.handlerIdentifier or node.uri or node.name
 end
 
+-- Reset the state of the tree.
+-- 重置树的状态。
 function M.reset()
   state = {
     nodes = {},
@@ -20,6 +29,8 @@ function M.reset()
   }
 end
 
+-- Initialize the tree with a list of projects.
+-- 使用项目列表初始化树。
 function M.init(projects, bufnr)
   M.reset()
   state.bufnr = bufnr
@@ -32,10 +43,14 @@ function M.init(projects, bufnr)
   end
 end
 
+-- Toggle the expansion state of a node.
+-- 切换节点的展开状态。
 function M.toggle(node_id, callback)
   state.open[node_id] = not state.open[node_id]
   local node = state.nodes[node_id]
 
+  -- If the node is being opened and its children have not been loaded yet, load them.
+  -- 如果节点正在打开并且其子节点尚未加载，则加载它们。
   if state.open[node_id] and not state.children[node_id] then
     jdtls.get_children(state.bufnr, node.project_uri, node, function(children)
       if children then
@@ -65,10 +80,20 @@ function M.toggle(node_id, callback)
   end
 end
 
+-- Check if a node is open.
+-- 检查节点是否打开。
 function M.is_open(node_id)
   return state.open[node_id]
 end
 
+-- Check if a node is expandable.
+-- 检查节点是否可展开。
+local function is_expandable(node)
+  return node.kind == NodeKind.Container or node.kind == NodeKind.PackageRoot or node.kind == NodeKind.Package
+end
+
+-- Get the list of visible nodes.
+-- 获取可见节点列表。
 function M.get_visible_nodes()
   local items = {}
   local function add_children(parent_id, depth)
@@ -78,12 +103,12 @@ function M.get_visible_nodes()
     for _, child_id in ipairs(state.children[parent_id]) do
       local child_node = state.nodes[child_id]
       local icon = "  "
-      if child_node.kind == NodeKind.Container or child_node.kind == NodeKind.PackageRoot then
+      if is_expandable(child_node) then
         icon = state.open[child_id] and "" or ""
       end
       child_node.display = string.rep("  ", depth) .. icon .. " " .. (child_node.displayName or child_node.name)
       table.insert(items, child_node)
-      if child_node.kind == NodeKind.Container or child_node.kind == NodeKind.PackageRoot then
+      if is_expandable(child_node) then
         add_children(child_id, depth + 1)
       end
     end
@@ -101,6 +126,8 @@ function M.get_visible_nodes()
   return items
 end
 
+-- Get the ID of a node.
+-- 获取节点的 ID。
 function M.get_id(node)
   return get_id(node)
 end

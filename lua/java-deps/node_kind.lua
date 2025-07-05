@@ -1,5 +1,8 @@
 -- lua/java-deps/node_kind.lua
 
+-- This module defines the enumerations for the different kinds of nodes in the dependency tree.
+-- 该模块定义了依赖树中不同种类节点的枚举。
+
 -- NodeKind an enumeration for the different kinds of nodes in the explorer.
 -- NodeKind 是一个枚举类型，用于表示资源管理器中不同种类节点。
 local NodeKind = {
@@ -29,7 +32,7 @@ local ContainerEntryKind = {
   -- Entry kind constant describing a classpath entry identifying a
   -- library. A library is a folder or JAR containing package
   -- fragments consisting of pre-compiled binaries.
-  -- 用于标识库的类路径条目。库是一个包含预编译二进制文件的包片段的文件夹或 JAR。
+  -- 用于标识库的类路径条目。库是一个包含预编译二进制文件的包片段��文件夹或 JAR。
   CPE_LIBRARY = 1,
 
   -- Entry kind constant describing a classpath entry identifying a
