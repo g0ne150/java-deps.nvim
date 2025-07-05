@@ -1,0 +1,18 @@
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Editor configuration
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Log files
+*.log
+
+# Dependencies (if any)
+/deps/
+
+/snacks.nvim
+/vscode-java-dependency
