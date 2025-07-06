@@ -93,80 +93,80 @@ end
 -- Show the dependency tree picker.
 -- 显示依赖树选择器。
 function M.show(projects, bufnr)
-  tree.init(projects, bufnr)
-
-  local picker = require("snacks.picker")
-  picker({
-    title = "Java Dependencies",
-    finder = finder,
-    layout = { preset = "sidebar", preview = false }, -- preview 设置为默认值可以 debug node 节点数据。
-    focus = "list",
-    format = function(entry)
-      return { { entry.display } }
-    end,
-    actions = {
-      -- Toggles a node. Expands if collapsed, collapses if expanded.
-      -- 切换节点。如果折叠则展开，如果展开则折叠。
-      toggle = function(p, item)
-        if not item then return end
-        local node = item.value
-        if is_toggleable(node) then
-          toggle_node(p, node)
-        else
-          p:close()
-          if node.uri then
-            open_node(bufnr, { uri = node.uri, range = node.range })
+  tree.init(projects, bufnr, function()
+    local picker = require("snacks.picker")
+    picker({
+      title = "Java Dependencies",
+      finder = finder,
+      layout = { preset = "sidebar", preview = false }, -- preview 设置为默认值可以 debug node 节点数据。
+      focus = "list",
+      format = function(entry)
+        return { { entry.display } }
+      end,
+      actions = {
+        -- Toggles a node. Expands if collapsed, collapses if expanded.
+        -- 切换节点。如果折叠则展开，如果展开则折叠。
+        toggle = function(p, item)
+          if not item then return end
+          local node = item.value
+          if is_toggleable(node) then
+            toggle_node(p, node)
+          else
+            p:close()
+            if node.uri then
+              open_node(bufnr, { uri = node.uri, range = node.range })
+            end
           end
-        end
-      end,
-      -- Expands a node only if it's collapsed.
-      -- 仅在节点折叠时展开。
-      expand = function(p, item)
-        if not item then return end
-        local node = item.value
-        if is_toggleable(node) and not tree.is_open(tree.get_id(node)) then
-          toggle_node(p, node)
-        elseif not is_toggleable(node) then
-          p:close()
-          if node.uri then
-            open_node(bufnr, { uri = node.uri, range = node.range })
+        end,
+        -- Expands a node only if it's collapsed.
+        -- 仅在节点折叠时展开。
+        expand = function(p, item)
+          if not item then return end
+          local node = item.value
+          if is_toggleable(node) and not tree.is_open(tree.get_id(node)) then
+            toggle_node(p, node)
+          elseif not is_toggleable(node) then
+            p:close()
+            if node.uri then
+              open_node(bufnr, { uri = node.uri, range = node.range })
+            end
           end
-        end
-      end,
-      -- Collapses a node. If already collapsed, collapses the parent.
-      -- 折叠节点。如果已经折叠，则折叠父节点。
-      collapse = function(p, item)
-        if not item then return end
-        local node = item.value
-        if is_toggleable(node) and tree.is_open(tree.get_id(node)) then
-          toggle_node(p, node)
-        elseif node.parent then
-          local parent_node = node.parent
-          local parent_id = tree.get_id(parent_node)
+        end,
+        -- Collapses a node. If already collapsed, collapses the parent.
+        -- 折叠节点。如果已经折叠，则折叠父节点。
+        collapse = function(p, item)
+          if not item then return end
+          local node = item.value
+          if is_toggleable(node) and tree.is_open(tree.get_id(node)) then
+            toggle_node(p, node)
+          elseif node.parent then
+            local parent_node = node.parent
+            local parent_id = tree.get_id(parent_node)
 
-          if not tree.is_open(parent_id) then return end
+            if not tree.is_open(parent_id) then return end
 
-          tree.toggle(parent_id, function()
-            if p.closed then return end
-            update(p, { target_id = parent_id, refresh = true })
-          end)
-        end
-      end,
-    },
-    win = {
-      list = {
-        keys = {
-          ["h"] = "collapse",
-          ["l"] = "expand",
-          ["o"] = "expand",
-          ["<CR>"] = "toggle",
+            tree.toggle(parent_id, function()
+              if p.closed then return end
+              update(p, { target_id = parent_id, refresh = true })
+            end)
+          end
+        end,
+      },
+      win = {
+        list = {
+          keys = {
+            ["h"] = "collapse",
+            ["l"] = "expand",
+            ["o"] = "expand",
+            ["<CR>"] = "toggle",
+          },
         },
       },
-    },
-    -- The default confirm action is now 'toggle'
-    -- 默认的确认操作现在是“toggle”
-    confirm = "toggle",
-  })
+      -- The default confirm action is now 'toggle'
+      -- 默认的确认操作现在是“toggle”
+      confirm = "toggle",
+    })
+  end)
 end
 
 return M

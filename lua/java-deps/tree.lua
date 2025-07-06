@@ -15,7 +15,11 @@ local state = {}
 -- Get a unique ID for a node.
 -- 获取节点的唯一 ID。
 local function get_id(node)
-  return node.handlerIdentifier or node.uri or node.name
+  local id = node.handlerIdentifier or node.uri or node.name
+  if node.project_uri then
+    return node.project_uri .. "::" .. id
+  end
+  return id
 end
 
 -- Reset the state of the tree.
@@ -29,17 +33,45 @@ function M.reset()
   }
 end
 
+-- Add a node to the root of the tree.
+-- 将一个节点添加到树的根部。
+local function add_node_to_root(node)
+  local id = get_id(node)
+  state.nodes[id] = node
+  table.insert(state.children.root, id)
+end
+
 -- Initialize the tree with a list of projects.
 -- 使用项目列表初始化树。
-function M.init(projects, bufnr)
+function M.init(projects, bufnr, callback)
   M.reset()
   state.bufnr = bufnr
   state.children.root = {}
-  for _, project in ipairs(projects) do
-    local id = get_id(project)
-    project.project_uri = project.uri -- Store project_uri for later use
-    state.nodes[id] = project
-    table.insert(state.children.root, id)
+
+  if #projects == 1 then
+    -- If there is only one project, directly use its children as the root nodes.
+    -- 如果只有一个项目，直接使用其子节点作为根节点。
+    local project = projects[1]
+    project.project_uri = project.uri
+    jdtls.get_children(bufnr, project.project_uri, project, function(children)
+      if children then
+        for _, child in ipairs(children) do
+          if child.kind == NodeKind.PackageRoot or child.kind == NodeKind.Container then
+            child.project_uri = project.project_uri -- Propagate project_uri to children
+            add_node_to_root(child)
+          end
+        end
+      end
+      callback()
+    end)
+  else
+    -- If there are multiple projects, use the projects as the root nodes.
+    -- 如果有多个项目，则使用项目作为根节点。
+    for _, project in ipairs(projects) do
+      project.project_uri = project.uri -- Store project_uri for later use
+      add_node_to_root(project)
+    end
+    callback()
   end
 end
 
@@ -56,18 +88,16 @@ function M.toggle(node_id, callback)
       if children then
         state.children[node_id] = {}
         for _, child in ipairs(children) do
+          child.project_uri = node.project_uri -- Propagate project_uri to children
+          child.parent = node
           if node.kind == NodeKind.Project then
             if child.kind == NodeKind.PackageRoot or child.kind == NodeKind.Container then
               local child_id = get_id(child)
-              child.project_uri = node.project_uri -- Propagate project_uri to children
-              child.parent = node
               state.nodes[child_id] = child
               table.insert(state.children[node_id], child_id)
             end
           else
             local child_id = get_id(child)
-            child.project_uri = node.project_uri -- Propagate project_uri to children
-            child.parent = node
             state.nodes[child_id] = child
             table.insert(state.children[node_id], child_id)
           end
@@ -89,7 +119,10 @@ end
 -- Check if a node is expandable.
 -- 检查节点是否可展开。
 local function is_expandable(node)
-  return node.kind == NodeKind.Container or node.kind == NodeKind.PackageRoot or node.kind == NodeKind.Package
+  return node.kind == NodeKind.Container
+    or node.kind == NodeKind.PackageRoot
+    or node.kind == NodeKind.Package
+    or node.kind == NodeKind.Project
 end
 
 -- Get the list of visible nodes.
@@ -114,13 +147,16 @@ function M.get_visible_nodes()
     end
   end
 
-  for _, project_id in ipairs(state.children.root or {}) do
-    local project_node = state.nodes[project_id]
-    local icon = state.open[project_id] and "" or ""
-    project_node.display = icon .. " " .. project_node.name
-    table.insert(items, project_node)
-    if state.open[project_id] then
-      add_children(project_id, 1)
+  for _, node_id in ipairs(state.children.root or {}) do
+    local node = state.nodes[node_id]
+    local icon = "  "
+    if is_expandable(node) then
+      icon = state.open[node_id] and "" or ""
+    end
+    node.display = icon .. " " .. (node.displayName or node.name)
+    table.insert(items, node)
+    if is_expandable(node) then
+      add_children(node_id, 1)
     end
   end
   return items
