@@ -17,14 +17,8 @@ end
 -- 显示依赖视图的函数。
 function M.view()
   local bufnr = vim.api.nvim_get_current_buf()
-  local clients = vim.lsp.get_active_clients({ bufnr = bufnr })
-  local jdtls_client
-  for _, client in ipairs(clients) do
-    if client.name == "jdtls" then
-      jdtls_client = client
-      break
-    end
-  end
+  local clients = vim.lsp.get_clients({ name = "jdtls", bufnr })
+  local jdtls_client = clients[1]
 
   if not jdtls_client then
     vim.notify("jdtls is not running.", vim.log.levels.ERROR)

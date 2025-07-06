@@ -5,9 +5,7 @@
 -- 该模块负责 snacks.nvim picker 的所有逻辑，包括自定义的 finder 和 confirm 行为。
 
 local tree = require("java-deps.tree")
-local jdtls = require("java-deps.jdtls")
 local NodeKind = require("java-deps.node_kind").NodeKind
-local ContainerEntryKind = require("java-deps.node_kind").ContainerEntryKind
 
 local M = {}
 
@@ -68,7 +66,7 @@ function M.show(projects, bufnr)
   picker({
     title = "Java Dependencies",
     finder = finder,
-    layout = { preset = "sidebar", preview = false },
+    layout = { preset = "sidebar", preview = false }, -- preview 设置为默认值可以 debug node 节点数据。
     focus = "list",
     format = function(entry)
       return { { entry.display } }
