@@ -44,9 +44,21 @@ local function toggle_node(p, node_to_toggle)
   end)
 end
 
-local function open_node(bufnr, uri)
-    vim.cmd("edit " .. uri) -- FIXME Not working for 'jdt://' prefix uri
+local function open_node(bufnr, location)
+  local clients = vim.lsp.get_clients({name = "jdtls", bufnr})
+  if #clients == 0 then
+    vim.notify("No active LSP client found for the current buffer.", vim.log.levels.WARN)
+    return
+  end
+
+  -- Assuming the first client is the one we want to use.
+  -- 假设第一个客户端是我们要使用的客户端。
+  local client = clients[1]
+  local position_encoding = client.offset_encoding
+
+  vim.lsp.util.show_document(location, position_encoding, { })
 end
+
 -- Show the dependency tree picker.
 -- 显示依赖树选择器。
 function M.show(projects, bufnr)
@@ -72,7 +84,7 @@ function M.show(projects, bufnr)
         else
           p:close()
           if node.uri then
-            open_node(bufnr, node.uri)
+            open_node(bufnr, { uri = node.uri, range = node.range })
           end
         end
       end,
@@ -86,7 +98,7 @@ function M.show(projects, bufnr)
         elseif not is_toggleable(node) then
           p:close()
           if node.uri then
-            open_node(bufnr, node.uri)
+            open_node(bufnr, { uri = node.uri, range = node.range })
           end
         end
       end,
