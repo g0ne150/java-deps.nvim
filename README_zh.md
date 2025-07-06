@@ -15,7 +15,7 @@
 
 确保 vscode-java-dependency 中的 com.microsoft.jdtls.ext.core 扩展 jar 包已经加载到你的 jdtls 中。
 
-- 如果你的 vscode 安装了 vscode-java-dependency，则位于 `.vscode/extensions/vscjava.vscode-java-dependency-{{version}}-universal/server/com.microsoft.jdtls.ext.core-0.24.1.jar`
+- 如果你的 vscode 安装了 vscode-java-dependency，则位于 `.vscode/extensions/vscjava.vscode-java-dependency-{{version}}-universal/server/com.microsoft.jdtls.ext.core-{{version}}.jar`
 - 我最近发起了一个 [pull request](https://github.com/mason-org/mason-registry/pull/10719)，希望把 vscode-java-dependency 作为依赖项加入到 mason-registry 中。
 
 nvim-jdtls 参考配置：
