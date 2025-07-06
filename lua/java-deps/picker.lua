@@ -35,15 +35,48 @@ end
 
 -- Helper function to toggle a node and refresh the picker.
 -- 辅助函数，用于切换节点并刷新选择器。
-local function toggle_node(p, node_to_toggle)
+local function toggle_node(p, node_to_toggle, on_done)
   p.list:set_target()
   tree.toggle(tree.get_id(node_to_toggle), function()
-    if not p.closed then p:find() end
+    if not p.closed then p:find({ on_done = on_done }) end
   end)
 end
 
+local function reveal(p, node_id)
+  local visible_nodes = tree.get_visible_nodes()
+  for i, n in ipairs(visible_nodes) do
+    if tree.get_id(n) == node_id then
+      p.list:view(i, nil, true)
+      return true
+    end
+  end
+  return false
+end
+
+local function update(p, opts)
+  opts = opts or {}
+  local target_id = opts.target_id
+  local refresh = opts.refresh
+
+  if not refresh and target_id then
+    return reveal(p, target_id)
+  end
+
+  if opts.target ~= false then
+    p.list:set_target()
+  end
+
+  p:find({
+    on_done = function()
+      if target_id then
+        reveal(p, target_id)
+      end
+    end,
+  })
+end
+
 local function open_node(bufnr, location)
-  local clients = vim.lsp.get_clients({name = "jdtls", bufnr})
+  local clients = vim.lsp.get_clients({ name = "jdtls", bufnr })
   if #clients == 0 then
     vim.notify("No active LSP client found for the current buffer.", vim.log.levels.WARN)
     return
@@ -54,7 +87,7 @@ local function open_node(bufnr, location)
   local client = clients[1]
   local position_encoding = client.offset_encoding
 
-  vim.lsp.util.show_document(location, position_encoding, { })
+  vim.lsp.util.show_document(location, position_encoding, {})
 end
 
 -- Show the dependency tree picker.
@@ -108,7 +141,15 @@ function M.show(projects, bufnr)
         if is_toggleable(node) and tree.is_open(tree.get_id(node)) then
           toggle_node(p, node)
         elseif node.parent then
-          toggle_node(p, node.parent)
+          local parent_node = node.parent
+          local parent_id = tree.get_id(parent_node)
+
+          if not tree.is_open(parent_id) then return end
+
+          tree.toggle(parent_id, function()
+            if p.closed then return end
+            update(p, { target_id = parent_id, refresh = true })
+          end)
         end
       end,
     },
