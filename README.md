@@ -6,61 +6,44 @@ A Neovim plugin for viewing Java project dependencies, inspired by [vscode-java-
 
 - View project dependencies in a tree structure.
 - Expand and collapse dependency nodes.
-- Uses `jdtls` to get dependency information.
-- Uses `snacks.nvim` to build the UI.
+- Use `jdtls` to get dependency information.
+- Use `snacks.nvim` to build the UI.
 
 ## Installation
 
-### nvim-jdtls
+### jdtls
 
 Ensure that the `com.microsoft.jdtls.ext.core` extension jar from `vscode-java-dependency` is loaded into your `jdtls`.
 
-- If you have `vscode-java-dependency` installed in VS Code, it is located at `.vscode/extensions/vscjava.vscode-java-dependency-{{version}}-universal/server/com.microsoft.jdtls.ext.core-{{version}}.jar`.
-- I recently opened a [pull request](https://github.com/mason-org/mason-registry/pull/10719) to add `vscode-java-dependency` as a dependency in `mason-registry`.
-
-Example `nvim-jdtls` configuration:
+- If you have `vscode-java-dependency` installed in VS Code, it is located at `.vscode/extensions/vscjava.vscode-java-dependency-{{version}}-universal/server/com.microsoft.jdtls.ext.core-{{version}}.jar`
+- I recently submitted a [pull request](https://github.com/mason-org/mason-registry/pull/10719) to add `vscode-java-dependency` as a dependency to the mason-registry.
 
 ```lua
-  {
-    "mfussenegger/nvim-jdtls",
-    opts = function()
-          -- ...
-    end,
-    config = function(_, opts)
-      -- Find the extra bundles that should be passed on the jdtls command-line
-      local bundles = {} ---@type string[]
-      if LazyVim.has("mason.nvim") then
-        local mason_registry = require("mason-registry")
-          if mason_registry.is_installed("vscode-java-dependency") then
-            local java_deps_pkg = mason_registry.get_package("vscode-java-dependency")
-            local java_deps_path = java_deps_pkg:get_install_path()
-            vim.list_extend(jar_patterns, {
-              java_deps_path .. "/extension/server/com.microsoft.jdtls.ext.core-*.jar",
-            })
-          end
+local java_deps_path = require("mason-registry")
+    .get_package("vscode-java-dependency")
+    :get_install_path() .. "/extension/server/com.microsoft.jdtls.ext.core-*.jar"
+-- or
+local java_deps_path = ".vscode/extensions/vscjava.vscode-java-dependency-{{version}}-universal/server/com.microsoft.jdtls.ext.core-{{version}}.jar"
+```
 
-          for _, jar_pattern in ipairs(jar_patterns) do
-            for _, bundle in ipairs(vim.split(vim.fn.glob(jar_pattern), "\n")) do
-              table.insert(bundles, bundle)
-            end
-          end
-      end
-      local function attach_jdtls()
+#### nvim-jdtls example configuration
 
-        local config = extend_or_override({
-          init_options = {
-            bundles = bundles,
-          },
-        }, opts.jdtls)
+```lua
+-- Add the vscode-java-dependency jdtls extension jar
+local jdtls_config = {
+  bundles = { java_deps_path }
+}
+```
 
-        require("jdtls").start_or_attach(config)
-      end
+#### nvim-lspconfig example configuration
 
-      -- ...
-
-      attach_jdtls()
-    end,
+```lua
+-- Add the vscode-java-dependency jdtls extension jar
+require("lspconfig").jdtls.setup {
+  init_options = {
+    bundles = { java_deps_path },
   },
+}
 ```
 
 ### [lazy.nvim](https://github.com/folke/lazy.nvim)
@@ -79,9 +62,9 @@ Example `nvim-jdtls` configuration:
 
 - Run `:JavaDepsView` to open the dependency view.
 
-### Keymaps
+### Keybindings
 
-- `h`: Collapse the current node. If the node is already collapsed or cannot be expanded, collapse the parent node.
+- `h`: Collapse the current node. If the current node is already collapsed or cannot be expanded, collapse the parent node.
 - `l`/`o`/`<CR>`: Expand the current node.
 
 ## Acknowledgements
