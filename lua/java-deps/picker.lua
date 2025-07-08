@@ -148,21 +148,6 @@ local function reveal_by_path(p, bufnr, buf_path)
     local initial_visible_nodes = tree.get_visible_nodes()
     local start_index = 1
 
-    -- Handle the case where there is only one project and the project node is not displayed.
-    -- 处理只有一个项目且不显示项目节点的情况。
-    if #path_nodes > 1 and path_nodes[1].kind == NodeKind.Project then
-      local project_node_visible = false
-      for _, node in ipairs(initial_visible_nodes) do
-        if node.kind == NodeKind.Project then
-          project_node_visible = true
-          break
-        end
-      end
-      if not project_node_visible then
-        start_index = 2
-      end
-    end
-
     local function expand_and_find(nodes_to_find, current_node_list, index)
       if index > #nodes_to_find then
         local last_node_info = nodes_to_find[#nodes_to_find]

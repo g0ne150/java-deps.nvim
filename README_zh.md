@@ -9,6 +9,10 @@
 - 使用 `jdtls` 获取依赖信息。
 - 使用 `snacks.nvim` 构建 UI。
 
+## 截图
+
+![java-deps.nvim 截图](images/2025-07-08-172625_hyprshot.png)
+
 ## 安装
 
 ### jdtls

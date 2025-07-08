@@ -9,6 +9,10 @@ A Neovim plugin for viewing Java project dependencies, inspired by [vscode-java-
 - Use `jdtls` to get dependency information.
 - Use `snacks.nvim` to build the UI.
 
+## Screenshot
+
+![java-deps.nvim screenshot](images/2025-07-08-172625_hyprshot.png)
+
 ## Installation
 
 ### jdtls

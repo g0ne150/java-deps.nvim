@@ -48,31 +48,13 @@ function M.init(projects, bufnr, callback)
   state.bufnr = bufnr
   state.children.root = {}
 
-  if #projects == 1 then
-    -- If there is only one project, directly use its children as the root nodes.
-    -- 如果只有一个项目，直接使用其子节点作为根节点。
-    local project = projects[1]
-    project.project_uri = project.uri
-    jdtls.get_children(bufnr, project.project_uri, project, function(children)
-      if children then
-        for _, child in ipairs(children) do
-          if child.kind == NodeKind.PackageRoot or child.kind == NodeKind.Container then
-            child.project_uri = project.project_uri -- Propagate project_uri to children
-            add_node_to_root(child)
-          end
-        end
-      end
-      callback()
-    end)
-  else
-    -- If there are multiple projects, use the projects as the root nodes.
-    -- 如果有多个项目，则使用项目作为根节点。
-    for _, project in ipairs(projects) do
-      project.project_uri = project.uri -- Store project_uri for later use
-      add_node_to_root(project)
-    end
-    callback()
+  -- If there are multiple projects, use the projects as the root nodes.
+  -- 如果有多个项目，则使用项目作为根节点。
+  for _, project in ipairs(projects) do
+    project.project_uri = project.uri -- Store project_uri for later use
+    add_node_to_root(project)
   end
+  callback()
 end
 
 -- Toggle the expansion state of a node.
