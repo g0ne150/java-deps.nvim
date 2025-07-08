@@ -5,6 +5,7 @@
 -- 该模块负责 snacks.nvim picker 的所有逻辑，包括自定义的 finder 和 confirm 行为。
 
 local tree = require("java-deps.tree")
+local jdtls = require("java-deps.jdtls")
 local NodeKind = require("java-deps.node_kind").NodeKind
 
 local M = {}
@@ -57,9 +58,12 @@ local function update(p, opts)
   opts = opts or {}
   local target_id = opts.target_id
   local refresh = opts.refresh
+  local on_done_callback = opts.on_done
 
   if not refresh and target_id then
-    return reveal(p, target_id)
+    local revealed = reveal(p, target_id)
+    if on_done_callback then on_done_callback(revealed) end
+    return
   end
 
   if opts.target ~= false then
@@ -70,6 +74,9 @@ local function update(p, opts)
     on_done = function()
       if target_id then
         reveal(p, target_id)
+      end
+      if on_done_callback then
+        on_done_callback()
       end
     end,
   })
@@ -90,12 +97,86 @@ local function open_node(bufnr, location)
   vim.lsp.util.show_document(location, position_encoding, {})
 end
 
+local function reveal_by_path(p, bufnr, buf_path)
+  if not buf_path or buf_path == "" then return end
+
+  local uri
+  if vim.startswith(buf_path, "jdt://") then
+    uri = buf_path
+  else
+    uri = vim.uri_from_fname(buf_path)
+  end
+
+  jdtls.resolve_path(bufnr, uri, function(path_nodes)
+    if not path_nodes or #path_nodes == 0 then return end
+
+    local initial_visible_nodes = tree.get_visible_nodes()
+    local start_index = 1
+
+    -- Handle the case where there is only one project and the project node is not displayed.
+    -- 处理只有一个项目且不显示项目节点的情况。
+    if #path_nodes > 1 and path_nodes[1].kind == NodeKind.Project then
+      local project_node_visible = false
+      for _, node in ipairs(initial_visible_nodes) do
+        if node.kind == NodeKind.Project then
+          project_node_visible = true
+          break
+        end
+      end
+      if not project_node_visible then
+        start_index = 2
+      end
+    end
+
+    local function expand_and_find(nodes_to_find, current_node_list, index)
+      if index > #nodes_to_find then
+        local last_node_info = nodes_to_find[#nodes_to_find]
+        for _, visible_node in ipairs(current_node_list) do
+          if visible_node.name == last_node_info.name and visible_node.kind == last_node_info.kind then
+            reveal(p, tree.get_id(visible_node))
+            break
+          end
+        end
+        return
+      end
+
+      local node_to_find = nodes_to_find[index]
+      local found_node = nil
+      for _, visible_node in ipairs(current_node_list) do
+        if visible_node.name == node_to_find.name and visible_node.kind == node_to_find.kind then
+          found_node = visible_node
+          break
+        end
+      end
+
+      if found_node then
+        local node_id = tree.get_id(found_node)
+        if not tree.is_open(node_id) and is_toggleable(found_node) then
+          tree.toggle(node_id, function()
+            update(p, {
+              on_done = function()
+                expand_and_find(nodes_to_find, tree.get_visible_nodes(), index + 1)
+              end,
+            })
+          end)
+        else
+          expand_and_find(nodes_to_find, tree.get_visible_nodes(), index + 1)
+        end
+      else
+        -- Node not found, do nothing.
+      end
+    end
+
+    expand_and_find(path_nodes, initial_visible_nodes, start_index)
+  end)
+end
+
 -- Show the dependency tree picker.
 -- 显示依赖树选择器。
 function M.show(projects, bufnr)
   tree.init(projects, bufnr, function()
     local picker = require("snacks.picker")
-    picker({
+    local p = picker({
       title = "Java Dependencies",
       finder = finder,
       layout = { preset = "sidebar", preview = false }, -- preview 设置为默认值可以 debug node 节点数据。
@@ -166,6 +247,9 @@ function M.show(projects, bufnr)
       -- 默认的确认操作现在是“toggle”
       confirm = "toggle",
     })
+
+    local current_buf_path = vim.api.nvim_buf_get_name(0)
+    reveal_by_path(p, bufnr, current_buf_path)
   end)
 end
 
