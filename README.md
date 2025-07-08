@@ -11,7 +11,7 @@ A Neovim plugin for viewing Java project dependencies, inspired by [vscode-java-
 
 ## Screenshot
 
-![java-deps.nvim screenshot](images/2025-07-08-172625_hyprshot.png)
+![java-deps.nvim screenshot](images/2025-07-08-192153_hyprshot.png)
 
 ## Installation
 

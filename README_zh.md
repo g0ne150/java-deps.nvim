@@ -11,7 +11,7 @@
 
 ## 截图
 
-![java-deps.nvim 截图](images/2025-07-08-172625_hyprshot.png)
+![java-deps.nvim 截图](images/2025-07-08-192153_hyprshot.png)
 
 ## 安装
 
