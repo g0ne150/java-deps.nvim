@@ -10,6 +10,42 @@ local NodeKind = require("java-deps.node_kind").NodeKind
 
 local M = {}
 
+local icons = {
+  [NodeKind.Workspace] = "󰅨 ",
+  [NodeKind.Project] = " ",
+  [NodeKind.PackageRoot] = " ",
+  [NodeKind.Package] = "󰏖 ",
+  [NodeKind.PrimaryType] = " ",
+  [NodeKind.CompilationUnit] = " ",
+  [NodeKind.ClassFile] = "󰈔 ",
+  [NodeKind.Container] = "󰆼 ",
+  [NodeKind.Folder] = "󰉋 ",
+  [NodeKind.File] = "󰈔 ",
+}
+
+local icon_hl_groups = {
+  [NodeKind.Workspace] = "SnacksPickerIconNamespace",
+  [NodeKind.Project] = "SnacksPickerIconModule",
+  [NodeKind.PackageRoot] = "SnacksPickerIconPackage",
+  [NodeKind.Package] = "SnacksPickerIconPackage",
+  [NodeKind.PrimaryType] = "SnacksPickerIconClass",
+  [NodeKind.CompilationUnit] = "SnacksPickerIconFile",
+  [NodeKind.ClassFile] = "SnacksPickerIconFile",
+  [NodeKind.Container] = "SnacksPickerIconStruct",
+  [NodeKind.Folder] = "SnacksPickerDirectory",
+  [NodeKind.File] = "SnacksPickerIconFile",
+}
+
+local function get_icon(node)
+  local icon = icons[node.kind]
+  if not icon then return "" end
+  return icon
+end
+
+local function get_icon_hl_group(node)
+  return icon_hl_groups[node.kind] or "SnacksPickerIcon"
+end
+
 -- The finder function for the picker.
 -- picker 的 finder 函数。
 local function finder(opts, ctx)
@@ -18,7 +54,6 @@ local function finder(opts, ctx)
     for _, item in ipairs(items) do
       cb({
         value = item,
-        display = item.display,
         text = item.displayName or item.name,
       })
     end
@@ -182,7 +217,17 @@ function M.show(projects, bufnr)
       layout = { preset = "sidebar", preview = false }, -- preview 设置为默认值可以 debug node 节点数据。
       focus = "list",
       format = function(entry)
-        return { { entry.display } }
+        local node = entry.value
+        local node_icon = get_icon(node)
+        local node_icon_hl = get_icon_hl_group(node)
+        local name = node.displayName or node.name
+        local prefix = node.prefix or ""
+
+        return {
+          { prefix .. " " },
+          { node_icon, node_icon_hl },
+          { name },
+        }
       end,
       actions = {
         -- Toggles a node. Expands if collapsed, collapses if expanded.

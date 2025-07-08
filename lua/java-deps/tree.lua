@@ -139,7 +139,7 @@ function M.get_visible_nodes()
       if is_expandable(child_node) then
         icon = state.open[child_id] and "" or ""
       end
-      child_node.display = string.rep("  ", depth) .. icon .. " " .. (child_node.displayName or child_node.name)
+      child_node.prefix = string.rep("  ", depth) .. icon
       table.insert(items, child_node)
       if is_expandable(child_node) then
         add_children(child_id, depth + 1)
@@ -153,7 +153,7 @@ function M.get_visible_nodes()
     if is_expandable(node) then
       icon = state.open[node_id] and "" or ""
     end
-    node.display = icon .. " " .. (node.displayName or node.name)
+    node.prefix = icon
     table.insert(items, node)
     if is_expandable(node) then
       add_children(node_id, 1)
