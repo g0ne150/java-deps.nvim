@@ -46,9 +46,7 @@ local function get_icon_hl_group(node)
   return icon_hl_groups[node.kind] or "SnacksPickerIcon"
 end
 
--- The finder function for the picker.
--- picker 的 finder 函数。
-local function finder(opts, ctx)
+local function dependency_finder(opts, ctx)
   return function(cb)
     local items = tree.get_visible_nodes()
     for _, item in ipairs(items) do
@@ -58,15 +56,6 @@ local function finder(opts, ctx)
       })
     end
   end
-end
-
--- Check if a node can be toggled.
--- 检查节点是否可以切换。
-local function is_toggleable(node)
-  return node.kind == NodeKind.Container
-    or node.kind == NodeKind.Project
-    or node.kind == NodeKind.PackageRoot
-    or node.kind == NodeKind.Package
 end
 
 -- Helper function to toggle a node and refresh the picker.
@@ -132,6 +121,44 @@ local function open_node(bufnr, location)
   vim.lsp.util.show_document(location, position_encoding, {})
 end
 
+local function expand_and_reveal(p, nodes_to_find, index)
+  index = index or 1
+  if index > #nodes_to_find then
+    local last_node_info = nodes_to_find[#nodes_to_find]
+    for _, visible_node in ipairs(tree.get_visible_nodes()) do
+      if visible_node.name == last_node_info.name and visible_node.kind == last_node_info.kind then
+        reveal(p, tree.get_id(visible_node))
+        break
+      end
+    end
+    return
+  end
+
+  local node_to_find = nodes_to_find[index]
+  local found_node = nil
+  for _, visible_node in ipairs(tree.get_visible_nodes()) do
+    if visible_node.name == node_to_find.name and visible_node.kind == node_to_find.kind then
+      found_node = visible_node
+      break
+    end
+  end
+
+  if found_node then
+    local node_id = tree.get_id(found_node)
+    if not tree.is_open(node_id) and tree.is_expandable(found_node) then
+      tree.toggle(node_id, function()
+        update(p, {
+          on_done = function()
+            expand_and_reveal(p, nodes_to_find, index + 1)
+          end,
+        })
+      end)
+    else
+      expand_and_reveal(p, nodes_to_find, index + 1)
+    end
+  end
+end
+
 local function reveal_by_path(p, bufnr, buf_path)
   if not buf_path or buf_path == "" then return end
 
@@ -144,51 +171,29 @@ local function reveal_by_path(p, bufnr, buf_path)
 
   jdtls.resolve_path(bufnr, uri, function(path_nodes)
     if not path_nodes or #path_nodes == 0 then return end
-
-    local initial_visible_nodes = tree.get_visible_nodes()
-    local start_index = 1
-
-    local function expand_and_find(nodes_to_find, current_node_list, index)
-      if index > #nodes_to_find then
-        local last_node_info = nodes_to_find[#nodes_to_find]
-        for _, visible_node in ipairs(current_node_list) do
-          if visible_node.name == last_node_info.name and visible_node.kind == last_node_info.kind then
-            reveal(p, tree.get_id(visible_node))
-            break
-          end
-        end
-        return
-      end
-
-      local node_to_find = nodes_to_find[index]
-      local found_node = nil
-      for _, visible_node in ipairs(current_node_list) do
-        if visible_node.name == node_to_find.name and visible_node.kind == node_to_find.kind then
-          found_node = visible_node
-          break
-        end
-      end
-
-      if found_node then
-        local node_id = tree.get_id(found_node)
-        if not tree.is_open(node_id) and is_toggleable(found_node) then
-          tree.toggle(node_id, function()
-            update(p, {
-              on_done = function()
-                expand_and_find(nodes_to_find, tree.get_visible_nodes(), index + 1)
-              end,
-            })
-          end)
-        else
-          expand_and_find(nodes_to_find, tree.get_visible_nodes(), index + 1)
-        end
-      else
-        -- Node not found, do nothing.
-      end
-    end
-
-    expand_and_find(path_nodes, initial_visible_nodes, start_index)
+    expand_and_reveal(p, path_nodes)
   end)
+end
+
+-- Helper function to handle node actions like toggle and expand.
+-- 辅助函数，用于处理节点的切换和展开等操作。
+local function handle_node_action(p, item, should_expand)
+  if not item then return end
+  local node = item.value
+
+  if tree.is_expandable(node) then
+    if should_expand and tree.is_open(tree.get_id(node)) then
+      -- If it's an expand action and the node is already open, do nothing.
+      -- 如果是展开操作且节点已打开，则不执行任何操作。
+      return
+    end
+    toggle_node(p, node)
+  else
+    p:close()
+    if node.uri then
+      open_node(p.bufnr, { uri = node.uri, range = node.range })
+    end
+  end
 end
 
 -- Show the dependency tree picker.
@@ -198,7 +203,7 @@ function M.show(projects, bufnr)
     local picker = require("snacks.picker")
     local p = picker({
       title = "Java Dependencies",
-      finder = finder,
+      finder = dependency_finder,
       layout = { preset = "sidebar", preview = false }, -- preview 设置为默认值可以 debug node 节点数据。
       focus = "list",
       format = function(entry)
@@ -206,7 +211,12 @@ function M.show(projects, bufnr)
         local node_icon = get_icon(node)
         local node_icon_hl = get_icon_hl_group(node)
         local name = node.displayName or node.name
-        local prefix = node.prefix or ""
+
+        local prefix_icon = "  "
+        if tree.is_expandable(node) then
+          prefix_icon = tree.is_open(tree.get_id(node)) and "" or ""
+        end
+        local prefix = string.rep("  ", node.depth or 0) .. prefix_icon
 
         return {
           { prefix .. " " },
@@ -218,37 +228,19 @@ function M.show(projects, bufnr)
         -- Toggles a node. Expands if collapsed, collapses if expanded.
         -- 切换节点。如果折叠则展开，如果展开则折叠。
         toggle = function(p, item)
-          if not item then return end
-          local node = item.value
-          if is_toggleable(node) then
-            toggle_node(p, node)
-          else
-            p:close()
-            if node.uri then
-              open_node(bufnr, { uri = node.uri, range = node.range })
-            end
-          end
+          handle_node_action(p, item, false)
         end,
         -- Expands a node only if it's collapsed.
         -- 仅在节点折叠时展开。
         expand = function(p, item)
-          if not item then return end
-          local node = item.value
-          if is_toggleable(node) and not tree.is_open(tree.get_id(node)) then
-            toggle_node(p, node)
-          elseif not is_toggleable(node) then
-            p:close()
-            if node.uri then
-              open_node(bufnr, { uri = node.uri, range = node.range })
-            end
-          end
+          handle_node_action(p, item, true)
         end,
         -- Collapses a node. If already collapsed, collapses the parent.
         -- 折叠节点。如果已经折叠，则折叠父节点。
         collapse = function(p, item)
           if not item then return end
           local node = item.value
-          if is_toggleable(node) and tree.is_open(tree.get_id(node)) then
+          if tree.is_expandable(node) and tree.is_open(tree.get_id(node)) then
             toggle_node(p, node)
           elseif node.parent then
             local parent_node = node.parent
@@ -277,6 +269,7 @@ function M.show(projects, bufnr)
       -- 默认的确认操作现在是“toggle”
       confirm = "toggle",
     })
+    p.bufnr = bufnr
 
     local current_buf_path = vim.api.nvim_buf_get_name(0)
     reveal_by_path(p, bufnr, current_buf_path)

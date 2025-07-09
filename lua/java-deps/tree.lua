@@ -100,7 +100,7 @@ end
 
 -- Check if a node is expandable.
 -- 检查节点是否可展开。
-local function is_expandable(node)
+function M.is_expandable(node)
   return node.kind == NodeKind.Container
     or node.kind == NodeKind.PackageRoot
     or node.kind == NodeKind.Package
@@ -117,13 +117,9 @@ function M.get_visible_nodes()
     end
     for _, child_id in ipairs(state.children[parent_id]) do
       local child_node = state.nodes[child_id]
-      local icon = "  "
-      if is_expandable(child_node) then
-        icon = state.open[child_id] and "" or ""
-      end
-      child_node.prefix = string.rep("  ", depth) .. icon
+      child_node.depth = depth
       table.insert(items, child_node)
-      if is_expandable(child_node) then
+      if M.is_expandable(child_node) then
         add_children(child_id, depth + 1)
       end
     end
@@ -131,13 +127,9 @@ function M.get_visible_nodes()
 
   for _, node_id in ipairs(state.children.root or {}) do
     local node = state.nodes[node_id]
-    local icon = "  "
-    if is_expandable(node) then
-      icon = state.open[node_id] and "" or ""
-    end
-    node.prefix = icon
+    node.depth = 0
     table.insert(items, node)
-    if is_expandable(node) then
+    if M.is_expandable(node) then
       add_children(node_id, 1)
     end
   end
