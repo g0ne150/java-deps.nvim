@@ -12,7 +12,8 @@ local M = {}
 function M.get_projects(bufnr, root_dir, callback)
   local params = {
     command = "java.project.list",
-    arguments = { vim.uri_from_fname(root_dir) },
+    -- The second argument 'true' corresponds to the 'filterNonJava' parameter.
+    arguments = { vim.uri_from_fname(root_dir), true },
   }
   vim.lsp.buf_request(bufnr, "workspace/executeCommand", params, function(err, result)
     if err then
