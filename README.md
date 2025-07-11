@@ -20,7 +20,7 @@ A Neovim plugin for viewing Java project dependencies, inspired by [vscode-java-
 Ensure that the `com.microsoft.jdtls.ext.core` extension jar from `vscode-java-dependency` is loaded into your `jdtls`.
 
 - If you have `vscode-java-dependency` installed in VS Code, it is located at `.vscode/extensions/vscjava.vscode-java-dependency-{{version}}-universal/server/com.microsoft.jdtls.ext.core-{{version}}.jar`
-- I recently submitted a [pull request](https://github.com/mason-org/mason-registry/pull/10719) to add `vscode-java-dependency` as a dependency to the mason-registry.
+- Install the vscode-java-dependency package via mason.
 
 ```lua
 local java_deps_path = require("mason-registry")
