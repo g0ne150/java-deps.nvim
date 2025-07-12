@@ -149,7 +149,10 @@ local function expand_and_reveal(p, nodes_to_find, index)
       tree.toggle(node_id, function()
         update(p, {
           on_done = function()
-            expand_and_reveal(p, nodes_to_find, index + 1)
+            -- Only reveal the next node if the picker is still open
+            if not p.closed then
+              expand_and_reveal(p, nodes_to_find, index + 1)
+            end
           end,
         })
       end)

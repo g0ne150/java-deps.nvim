@@ -85,10 +85,16 @@ function M.toggle(node_id, callback)
           end
         end
       end
-      callback()
+      -- Only call the callback if it's provided
+      if callback then
+        callback()
+      end
     end)
   else
-    callback()
+    -- Only call the callback if it's provided
+    if callback then
+      callback()
+    end
   end
 end
 
