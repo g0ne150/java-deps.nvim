@@ -54,11 +54,18 @@ require("lspconfig").jdtls.setup {
 
 ```lua
 {
-  "g0ne150/java-deps.nvim",
-  dependencies = { "folke/snacks.nvim" },
-  config = function()
-    -- 无需设置，插件在命令调用时加载
-  end,
+  {
+    "g0ne150/java-deps.nvim",
+    dependencies = {
+      "folke/snacks.nvim",
+      {
+        "mason-org/mason.nvim",
+        opts = { ensure_installed = { "vscode-java-dependency" } },
+      },
+    },
+    config = function()
+    end,
+  },
 }
 ```
 

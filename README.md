@@ -54,11 +54,18 @@ require("lspconfig").jdtls.setup {
 
 ```lua
 {
-  "g0ne150/java-deps.nvim",
-  dependencies = { "folke/snacks.nvim" },
-  config = function()
-    -- No setup needed, the plugin is loaded when the command is called
-  end,
+  {
+    "g0ne150/java-deps.nvim",
+    dependencies = {
+      "folke/snacks.nvim",
+      {
+        "mason-org/mason.nvim",
+        opts = { ensure_installed = { "vscode-java-dependency" } },
+      },
+    },
+    config = function()
+    end,
+  },
 }
 ```
 
