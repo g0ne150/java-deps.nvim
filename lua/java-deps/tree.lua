@@ -29,7 +29,6 @@ function M.reset()
     nodes = {},
     children = {},
     open = {},
-    bufnr = nil,
   }
 end
 
@@ -43,9 +42,8 @@ end
 
 -- Initialize the tree with a list of projects.
 -- 使用项目列表初始化树。
-function M.init(projects, bufnr, callback)
+function M.init(projects, callback)
   M.reset()
-  state.bufnr = bufnr
   state.children.root = {}
 
   -- If there are multiple projects, use the projects as the root nodes.
@@ -66,7 +64,7 @@ function M.toggle(node_id, callback)
   -- If the node is being opened and its children have not been loaded yet, load them.
   -- 如果节点正在打开并且其子节点尚未加载，则加载它们。
   if state.open[node_id] and not state.children[node_id] then
-    jdtls.get_children(state.bufnr, node.project_uri, node, function(children)
+    jdtls.get_children(node.project_uri, node, function(children)
       if children then
         state.children[node_id] = {}
         for _, child in ipairs(children) do

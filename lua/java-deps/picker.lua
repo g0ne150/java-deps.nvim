@@ -4,8 +4,8 @@
 -- including custom finder and confirm actions.
 -- 该模块负责 snacks.nvim picker 的所有逻辑，包括自定义的 finder 和 confirm 行为。
 
-local tree = require("java-deps.tree")
 local jdtls = require("java-deps.jdtls")
+local tree = require("java-deps.tree")
 local NodeKind = require("java-deps.node_kind").NodeKind
 
 local M = {}
@@ -38,7 +38,9 @@ local icon_hl_groups = {
 
 local function get_icon(node)
   local icon = icons[node.kind]
-  if not icon then return "" end
+  if not icon then
+    return ""
+  end
   return icon
 end
 
@@ -63,7 +65,9 @@ end
 local function toggle_node(p, node_to_toggle, on_done)
   p.list:set_target()
   tree.toggle(tree.get_id(node_to_toggle), function()
-    if not p.closed then p:find({ on_done = on_done }) end
+    if not p.closed then
+      p:find({ on_done = on_done })
+    end
   end)
 end
 
@@ -86,7 +90,9 @@ local function update(p, opts)
 
   if not refresh and target_id then
     local revealed = reveal(p, target_id)
-    if on_done_callback then on_done_callback(revealed) end
+    if on_done_callback then
+      on_done_callback(revealed)
+    end
     return
   end
 
@@ -106,16 +112,11 @@ local function update(p, opts)
   })
 end
 
-local function open_node(bufnr, location)
-  local clients = vim.lsp.get_clients({ name = "jdtls", bufnr })
-  if #clients == 0 then
-    vim.notify("No active LSP client found for the current buffer.", vim.log.levels.WARN)
+local function open_node(location)
+  local client = jdtls.get_jdtls_client()
+  if not client then
     return
   end
-
-  -- Assuming the first client is the one we want to use.
-  -- 假设第一个客户端是我们要使用的客户端。
-  local client = clients[1]
   local position_encoding = client.offset_encoding
 
   vim.lsp.util.show_document(location, position_encoding, {})
@@ -162,8 +163,10 @@ local function expand_and_reveal(p, nodes_to_find, index)
   end
 end
 
-local function reveal_by_path(p, bufnr, buf_path)
-  if not buf_path or buf_path == "" then return end
+local function reveal_by_path(p, buf_path)
+  if not buf_path or buf_path == "" then
+    return
+  end
 
   local uri
   if vim.startswith(buf_path, "jdt://") then
@@ -172,8 +175,10 @@ local function reveal_by_path(p, bufnr, buf_path)
     uri = vim.uri_from_fname(buf_path)
   end
 
-  jdtls.resolve_path(bufnr, uri, function(path_nodes)
-    if not path_nodes or #path_nodes == 0 then return end
+  jdtls.resolve_path(uri, function(path_nodes)
+    if not path_nodes or #path_nodes == 0 then
+      return
+    end
     expand_and_reveal(p, path_nodes)
   end)
 end
@@ -181,7 +186,9 @@ end
 -- Helper function to handle node actions like toggle and expand.
 -- 辅助函数，用于处理节点的切换和展开等操作。
 local function handle_node_action(p, item, should_expand)
-  if not item then return end
+  if not item then
+    return
+  end
   local node = item.value
 
   if tree.is_expandable(node) then
@@ -194,15 +201,15 @@ local function handle_node_action(p, item, should_expand)
   else
     p:close()
     if node.uri then
-      open_node(p.bufnr, { uri = node.uri, range = node.range })
+      open_node({ uri = node.uri, range = node.range })
     end
   end
 end
 
 -- Show the dependency tree picker.
 -- 显示依赖树选择器。
-function M.show(projects, bufnr)
-  tree.init(projects, bufnr, function()
+function M.show(projects)
+  tree.init(projects, function()
     local picker = require("snacks.picker")
     local p = picker({
       title = "Java Dependencies",
@@ -241,7 +248,9 @@ function M.show(projects, bufnr)
         -- Collapses a node. If already collapsed, collapses the parent.
         -- 折叠节点。如果已经折叠，则折叠父节点。
         collapse = function(p, item)
-          if not item then return end
+          if not item then
+            return
+          end
           local node = item.value
           if tree.is_expandable(node) and tree.is_open(tree.get_id(node)) then
             toggle_node(p, node)
@@ -249,10 +258,14 @@ function M.show(projects, bufnr)
             local parent_node = node.parent
             local parent_id = tree.get_id(parent_node)
 
-            if not tree.is_open(parent_id) then return end
+            if not tree.is_open(parent_id) then
+              return
+            end
 
             tree.toggle(parent_id, function()
-              if p.closed then return end
+              if p.closed then
+                return
+              end
               update(p, { target_id = parent_id, refresh = true })
             end)
           end
@@ -272,10 +285,9 @@ function M.show(projects, bufnr)
       -- 默认的确认操作现在是“toggle”
       confirm = "toggle",
     })
-    p.bufnr = bufnr
 
     local current_buf_path = vim.api.nvim_buf_get_name(0)
-    reveal_by_path(p, bufnr, current_buf_path)
+    reveal_by_path(p, current_buf_path)
   end)
 end
 
