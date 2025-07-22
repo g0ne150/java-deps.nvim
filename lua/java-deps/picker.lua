@@ -48,7 +48,7 @@ local function get_icon_hl_group(node)
   return icon_hl_groups[node.kind] or "SnacksPickerIcon"
 end
 
-local function dependency_finder(opts, ctx)
+local function dependency_finder()
   return function(cb)
     local items = tree.get_visible_nodes()
     for _, item in ipairs(items) do
