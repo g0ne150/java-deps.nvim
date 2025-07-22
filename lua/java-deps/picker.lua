@@ -226,14 +226,14 @@ function M.show(projects)
         local node_icon_hl = get_icon_hl_group(node)
         local name = node.displayName or node.name
 
-        local prefix_icon = "  "
+        local prefix = string.rep("  ", node.depth or 0)
+
         if tree.is_expandable(node) then
-          prefix_icon = tree.is_open(tree.get_id(node)) and "" or ""
+          prefix = prefix .. (tree.is_open(tree.get_id(node)) and " " or " ")
         end
-        local prefix = string.rep("  ", node.depth or 0) .. prefix_icon
 
         return {
-          { prefix .. " " },
+          { prefix },
           { node_icon, node_icon_hl },
           { name },
         }
