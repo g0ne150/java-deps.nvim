@@ -9,6 +9,7 @@ local tree = require("java-deps.tree")
 local NodeKind = require("java-deps.node_kind").NodeKind
 
 local M = {}
+local _picker = nil
 
 local icons = {
   [NodeKind.Workspace] = "󰅨 ",
@@ -63,6 +64,9 @@ end
 -- Helper function to toggle a node and refresh the picker.
 -- 辅助函数，用于切换节点并刷新选择器。
 local function toggle_node(p, node_to_toggle, on_done)
+  if not p or p.closed then
+    return
+  end
   p.list:set_target()
   tree.toggle(tree.get_id(node_to_toggle), function()
     if not p.closed then
@@ -211,7 +215,7 @@ end
 function M.show(projects)
   tree.init(projects, function()
     local picker = require("snacks.picker")
-    local p = picker({
+    _picker = picker({
       title = "Java Dependencies",
       finder = dependency_finder,
       layout = { preset = "sidebar", preview = false }, -- preview 设置为默认值可以 debug node 节点数据。
@@ -287,8 +291,14 @@ function M.show(projects)
     })
 
     local current_buf_path = vim.api.nvim_buf_get_name(0)
-    reveal_by_path(p, current_buf_path)
+    reveal_by_path(_picker, current_buf_path)
   end)
+end
+
+function M.close()
+  if _picker and not _picker.closed then
+    _picker:close()
+  end
 end
 
 return M

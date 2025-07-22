@@ -11,6 +11,9 @@ local M = {}
 -- The state of the dependency tree.
 -- 依赖树的状态。
 local state = {}
+local _nodes_cache = {}
+local _children_cache = {}
+local _open_states = {}
 
 -- Get a unique ID for a node.
 -- 获取节点的唯一 ID。
@@ -26,10 +29,17 @@ end
 -- 重置树的状态。
 function M.reset()
   state = {
-    nodes = {},
-    children = {},
-    open = {},
+    nodes = _nodes_cache,
+    children = _children_cache,
+    open = _open_states,
   }
+end
+
+function M.clear_cache()
+  _nodes_cache = {}
+  _children_cache = {}
+  _open_states = {}
+  M.reset()
 end
 
 -- Add a node to the root of the tree.

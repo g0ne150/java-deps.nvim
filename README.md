@@ -72,6 +72,7 @@ require("lspconfig").jdtls.setup {
 ## Usage
 
 - Run `:JavaDepsView` to open the dependency view.
+- Run `:JavaDepsViewRefresh` to clear the cache and refresh the dependency view. This is useful when you have updated your dependencies in `pom.xml` or `build.gradle`.
 
 ### Keybindings
 

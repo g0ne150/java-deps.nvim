@@ -72,6 +72,7 @@ require("lspconfig").jdtls.setup {
 ## 使用
 
 - 运行 `:JavaDepsView` 打开依赖视图。
+- 运行 `:JavaDepsViewRefresh` 清除缓存并刷新依赖视图。当您在 `pom.xml` 或 `build.gradle` 中更新依赖项后，此命令非常有用。
 
 ### 快捷键
 
