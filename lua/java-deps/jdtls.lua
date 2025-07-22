@@ -27,7 +27,7 @@ function M.get_projects(callback)
   local params = {
     command = "java.project.list",
     -- The second argument 'true' corresponds to the 'filterNonJava' parameter.
-    arguments = { vim.uri_from_fname(jdtls_client.root_dir)},
+    arguments = { vim.uri_from_fname(jdtls_client.root_dir), false },
   }
   jdtls_client:request("workspace/executeCommand", params, function(err, result)
     if err then
