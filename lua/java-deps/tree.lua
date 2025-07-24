@@ -80,6 +80,17 @@ function M.toggle(node_id, callback)
         for _, child in ipairs(children) do
           child.project_uri = node.project_uri -- Propagate project_uri to children
           child.parent = node
+          -- For Folder nodes, propagate the rootPath and handlerIdentifier from the parent node
+          -- 对于Folder节点，从父节点传播rootPath和handlerIdentifier
+          if node.kind == NodeKind.Folder or node.kind == NodeKind.PackageRoot then
+            child.rootPath = node.path
+            -- child.handlerIdentifier = node.handlerIdentifier
+            -- Also propagate the handlerIdentifier for proper identification of the package root
+            -- 同时传播handlerIdentifier以正确识别包根
+            -- if node.handlerIdentifier then
+            --   child.handlerIdentifier = node.handlerIdentifier
+            -- end
+          end
           if node.kind == NodeKind.Project then
             if child.kind == NodeKind.PackageRoot or child.kind == NodeKind.Container then
               local child_id = get_id(child)
@@ -119,6 +130,7 @@ function M.is_expandable(node)
     or node.kind == NodeKind.PackageRoot
     or node.kind == NodeKind.Package
     or node.kind == NodeKind.Project
+    or node.kind == NodeKind.Folder
 end
 
 -- Get the list of visible nodes.

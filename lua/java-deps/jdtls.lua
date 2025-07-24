@@ -3,7 +3,7 @@
 -- This module encapsulates all communication with the jdtls language server.
 -- 该模块封装了所有与 jdtls 语言服务器的通信。
 
-local NodeKind = require("java-deps.node_kind")
+local NodeKind = require("java-deps.node_kind").NodeKind
 
 local M = {}
 
@@ -73,6 +73,13 @@ function M.get_children(project_uri, node, callback)
 
   if node.kind == NodeKind.Project then
     params.kind = NodeKind.Project
+  end
+
+  -- For Folder nodes, we need to pass the rootPath to properly resolve the path
+  -- 对于Folder节点，我们需要传递rootPath以正确解析路径
+  if node.kind == NodeKind.Folder and node.rootPath then
+    params.rootPath = node.rootPath
+    params.handlerIdentifier = node.handlerIdentifier
   end
 
   get_node_children(params, callback)
