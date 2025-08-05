@@ -20,7 +20,23 @@ end
 -- 获取此文件夹的根节点（向上遍历层次结构直到找到PackageRoot或Project）
 function FolderNode:get_root_node()
   local current = self.parent
-  while current and current:get_kind() ~= NodeKind.PackageRoot and current:get_kind() ~= NodeKind.Project do
+  while current do
+    -- Check if current is a table with a kind field or a node object with get_kind method
+    -- 检查current是具有kind字段的表还是具有get_kind方法的节点对象
+    local kind = nil
+    if type(current.get_kind) == "function" then
+      kind = current:get_kind()
+    elseif current.node_data and current.node_data.kind then
+      kind = current.node_data.kind
+    elseif current.kind then
+      kind = current.kind
+    else
+      break
+    end
+
+    if kind == NodeKind.PackageRoot or kind == NodeKind.Project then
+      return current
+    end
     current = current.parent
   end
   return current
@@ -35,12 +51,26 @@ function FolderNode:get_children(callback)
   local root_node = self:get_root_node()
 
   if root_node then
-    node_data.rootPath = root_node:get_path()
-    node_data.handlerIdentifier = root_node:get_handler_identifier()
+    -- Get rootPath and handlerIdentifier from the root node
+    -- 从根节点获取rootPath和handlerIdentifier
+    if type(root_node.get_path) == "function" then
+      node_data.rootPath = root_node:get_path()
+    elseif root_node.node_data and root_node.node_data.path then
+      node_data.rootPath = root_node.node_data.path
+    elseif root_node.path then
+      node_data.rootPath = root_node.path
+    end
+
+    if type(root_node.get_handler_identifier) == "function" then
+      node_data.handlerIdentifier = root_node:get_handler_identifier()
+    elseif root_node.node_data and root_node.node_data.handlerIdentifier then
+      node_data.handlerIdentifier = root_node.node_data.handlerIdentifier
+    elseif root_node.handlerIdentifier then
+      node_data.handlerIdentifier = root_node.handlerIdentifier
+    end
   end
 
   jdtls.get_children(self:get_project_uri(), node_data, callback)
 end
 
 return FolderNode
-
