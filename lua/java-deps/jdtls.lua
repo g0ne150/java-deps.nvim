@@ -75,11 +75,10 @@ function M.get_children(project_uri, node, callback)
     params.kind = NodeKind.Project
   end
 
-  -- For Folder nodes, we need to pass the rootPath to properly resolve the path
-  -- 对于Folder节点，我们需要传递rootPath以正确解析路径
-  if node.kind == NodeKind.Folder and node.rootPath then
+  -- Add additional parameters that might be needed
+  -- 添加可能需要的额外参数
+  if node.rootPath then
     params.rootPath = node.rootPath
-    params.handlerIdentifier = node.handlerIdentifier
   end
 
   get_node_children(params, callback)

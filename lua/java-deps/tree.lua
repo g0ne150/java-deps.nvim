@@ -3,7 +3,7 @@
 -- This module manages the state of the dependency tree, including node expansion and data storage.
 -- 该模块管理依赖树的状态，包括节点展开和数据存储。
 
-local jdtls = require("java-deps.jdtls")
+local NodeFactory = require("java-deps.nodes.node_factory")
 local NodeKind = require("java-deps.node_kind").NodeKind
 
 local M = {}
@@ -74,22 +74,22 @@ function M.toggle(node_id, callback)
   -- If the node is being opened and its children have not been loaded yet, load them.
   -- 如果节点正在打开并且其子节点尚未加载，则加载它们。
   if state.open[node_id] and not state.children[node_id] then
-    jdtls.get_children(node.project_uri, node, function(children)
+    -- Create a node object to handle getting children
+    -- 创建节点对象来处理获取子节点
+    local node_obj = NodeFactory.create_node(node, node.parent)
+    node_obj:get_children(function(children)
       if children then
         state.children[node_id] = {}
         for _, child in ipairs(children) do
           child.project_uri = node.project_uri -- Propagate project_uri to children
           child.parent = node
-          -- For Folder nodes, propagate the rootPath and handlerIdentifier from the parent node
-          -- 对于Folder节点，从父节点传播rootPath和handlerIdentifier
+          -- For Folder nodes, propagate the rootPath from the parent node
+          -- 对于Folder节点，从父节点传播rootPath
           if node.kind == NodeKind.Folder or node.kind == NodeKind.PackageRoot then
-            child.rootPath = node.path
-            -- child.handlerIdentifier = node.handlerIdentifier
-            -- Also propagate the handlerIdentifier for proper identification of the package root
-            -- 同时传播handlerIdentifier以正确识别包根
-            -- if node.handlerIdentifier then
-            --   child.handlerIdentifier = node.handlerIdentifier
-            -- end
+            -- For Folder nodes inside a jar, we need to propagate the rootPath correctly
+            if node.rootPath and not child.rootPath then
+              child.rootPath = node.rootPath
+            end
           end
           if node.kind == NodeKind.Project then
             if child.kind == NodeKind.PackageRoot or child.kind == NodeKind.Container then
@@ -126,11 +126,8 @@ end
 -- Check if a node is expandable.
 -- 检查节点是否可展开。
 function M.is_expandable(node)
-  return node.kind == NodeKind.Container
-    or node.kind == NodeKind.PackageRoot
-    or node.kind == NodeKind.Package
-    or node.kind == NodeKind.Project
-    or node.kind == NodeKind.Folder
+  local node_obj = NodeFactory.create_node(node, node.parent)
+  return node_obj:is_expandable()
 end
 
 -- Get the list of visible nodes.
