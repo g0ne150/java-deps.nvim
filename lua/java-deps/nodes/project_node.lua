@@ -23,3 +23,4 @@ function ProjectNode:get_children(callback)
 end
 
 return ProjectNode
+

@@ -33,13 +33,14 @@ function FolderNode:get_children(callback)
   -- 对于文件夹节点，我们需要从根节点传递rootPath和handlerIdentifier
   local node_data = vim.deepcopy(self.node_data)
   local root_node = self:get_root_node()
-  
+
   if root_node then
     node_data.rootPath = root_node:get_path()
     node_data.handlerIdentifier = root_node:get_handler_identifier()
   end
-  
+
   jdtls.get_children(self:get_project_uri(), node_data, callback)
 end
 
 return FolderNode
+

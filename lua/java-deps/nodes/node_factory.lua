@@ -4,11 +4,11 @@
 -- 节点工厂，根据节点数据创建适当的节点类型
 
 local BaseNode = require("java-deps.nodes.base_node")
-local ProjectNode = require("java-deps.nodes.project_node")
-local PackageRootNode = require("java-deps.nodes.package_root_node")
+local ContainerNode = require("java-deps.nodes.container_node")
 local FolderNode = require("java-deps.nodes.folder_node")
 local PackageNode = require("java-deps.nodes.package_node")
-local ContainerNode = require("java-deps.nodes.container_node")
+local PackageRootNode = require("java-deps.nodes.package_root_node")
+local ProjectNode = require("java-deps.nodes.project_node")
 local NodeKind = require("java-deps.node_kind").NodeKind
 
 local NodeFactory = {}
@@ -34,3 +34,4 @@ function NodeFactory.create_node(node_data, parent)
 end
 
 return NodeFactory
+

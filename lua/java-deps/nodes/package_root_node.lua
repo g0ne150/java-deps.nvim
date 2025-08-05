@@ -23,3 +23,4 @@ function PackageRootNode:get_children(callback)
 end
 
 return PackageRootNode
+
